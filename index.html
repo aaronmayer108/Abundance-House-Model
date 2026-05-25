@@ -10,74 +10,198 @@
   :root {
     --color-bg: #ffffff;
     --color-bg-secondary: #f5f5f3;
-    --color-bg-tertiary: #efefed;
     --color-text-primary: #1a1a18;
     --color-text-secondary: #5f5e5a;
     --color-text-tertiary: #888780;
-    --color-border: rgba(0,0,0,0.12);
-    --color-border-secondary: rgba(0,0,0,0.22);
-    --radius-md: 8px;
-    --radius-lg: 12px;
+    --color-border: rgba(0,0,0,0.10);
+    --color-border-secondary: rgba(0,0,0,0.20);
+    --radius-md: 10px;
+    --radius-lg: 14px;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --rainbow: linear-gradient(90deg,#ff0055,#ff6600,#ffdd00,#00cc44,#0088ff,#aa00ff);
+    --thumb-size: 22px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --color-bg: #1c1c1a;
       --color-bg-secondary: #252523;
-      --color-bg-tertiary: #2e2e2b;
       --color-text-primary: #eeecea;
       --color-text-secondary: #a8a7a0;
       --color-text-tertiary: #6e6d69;
-      --color-border: rgba(255,255,255,0.1);
-      --color-border-secondary: rgba(255,255,255,0.18);
+      --color-border: rgba(255,255,255,0.09);
+      --color-border-secondary: rgba(255,255,255,0.16);
     }
   }
-  body { font-family: var(--font); background: var(--color-bg); color: var(--color-text-primary); padding: 2rem 1rem; min-height: 100vh; }
-  .container { max-width: 860px; margin: 0 auto; }
-  h1 { font-size: 20px; font-weight: 500; margin-bottom: 0.25rem; }
+
+  body {
+    font-family: var(--font);
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+  .container { max-width: 860px; margin: 0 auto; position: relative; z-index: 0; }
+
+  /* ── Title ── */
+  h1 {
+    font-size: 22px; font-weight: 600; margin-bottom: 0.25rem;
+    color: var(--color-text-primary);
+  }
   .subtitle { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 1.5rem; }
+
+  /* ── Tabs ── */
   .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-  .tab-btn { padding: 6px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-secondary); cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font); }
-  .tab-btn.active { background: var(--color-bg-secondary); color: var(--color-text-primary); border-color: var(--color-border-secondary); }
+  .tab-btn {
+    padding: 6px 18px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--color-border-secondary);
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    color: var(--color-text-primary);
+    border-color: transparent;
+    background-image: linear-gradient(var(--color-bg-secondary), var(--color-bg-secondary)), var(--rainbow);
+    background-origin: border-box; background-clip: padding-box, border-box;
+    border: 2px solid transparent;
+  }
   .tab-btn.add-btn { border-style: dashed; }
   .tab-btn:hover { background: var(--color-bg-secondary); }
+
+  /* ── Scenario ── */
   .scenario { display: none; }
   .scenario.active { display: block; }
-  .section-title { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 1.5rem 0 0.75rem; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    margin: 1.5rem 0 0.75rem;
+    color: var(--color-text-tertiary);
+    display: block;
+  }
+
+  /* ── Knobs ── */
   .knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-  .knob { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
-  .knob-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .knob {
+    border-radius: var(--radius-md); padding: 14px 16px;
+    border: 1.5px solid transparent;
+    background-image: linear-gradient(var(--color-bg-secondary), var(--color-bg-secondary)), var(--rainbow);
+    background-origin: border-box; background-clip: padding-box, border-box;
+    transition: box-shadow 0.2s;
+  }
+  .knob:hover { box-shadow: 0 4px 18px rgba(83,74,183,0.15); }
+  .knob-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .knob-label { font-size: 13px; color: var(--color-text-secondary); }
-  .knob-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); min-width: 80px; text-align: right; }
-  input[type=range] { width: 100%; accent-color: #534AB7; cursor: pointer; }
+  .knob-value {
+    font-size: 14px; font-weight: 600; min-width: 80px; text-align: right;
+    color: var(--color-text-primary);
+  }
+
+  /* ══ SLIDERS ══ */
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, #b8daf7, #7db8ef);
+    outline: none; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: var(--thumb-size); height: var(--thumb-size);
+    border-radius: 50%;
+    border: 2.5px solid #7db8ef;
+    background: var(--color-bg);
+    box-shadow: 0 2px 10px rgba(125,184,239,0.4);
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    box-shadow: 0 3px 18px rgba(125,184,239,0.6);
+  }
+  input[type=range]::-moz-range-track {
+    height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, #b8daf7, #7db8ef);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: var(--thumb-size); height: var(--thumb-size);
+    border-radius: 50%; border: 2.5px solid #7db8ef;
+    background: var(--color-bg);
+    box-shadow: 0 2px 10px rgba(125,184,239,0.4);
+    cursor: pointer;
+  }
+
+  /* ── Metrics ── */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 0.75rem; }
-  .metric { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 14px 16px; }
+  .metric {
+    border-radius: var(--radius-md); padding: 14px 16px;
+    border: 1.5px solid transparent;
+    background-image: linear-gradient(var(--color-bg-secondary), var(--color-bg-secondary)), var(--rainbow);
+    background-origin: border-box; background-clip: padding-box, border-box;
+  }
   .metric-label { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px; }
-  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; }
+  .metric-value {
+    font-size: 22px; font-weight: 600; line-height: 1.2;
+    color: var(--color-text-primary);
+  }
   .metric-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
-  .divider { border: none; border-top: 0.5px solid var(--color-border); margin: 1.5rem 0; }
-  .dist-row { display: flex; gap: 8px; margin-top: 0.5rem; }
-  .dist-pill { flex: 1; border-radius: var(--radius-md); padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 500; }
-  .pill-fail { background: #F1EFE8; color: #444441; }
-  .pill-good { background: #EAF3DE; color: #3B6D11; }
-  .pill-great { background: #E6F1FB; color: #0C447C; }
+
+  /* ── Divider ── */
+  .divider { border: none; height: 2px; margin: 1.5rem 0; background: var(--rainbow); border-radius: 1px; opacity: 0.5; }
+
+  /* ── Distribution pills ── */
+  .dist-row { display: flex; gap: 6px; margin-top: 0.75rem; flex-wrap: wrap; }
+  .dist-pill { flex: 1; min-width: 70px; border-radius: var(--radius-md); padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 500; }
+  .pill-fail    { background: #F1EFE8; color: #444441; }
+  .pill-modest  { background: #FEF3E2; color: #7A4B00; }
+  .pill-good    { background: #EAF3DE; color: #3B6D11; }
+  .pill-great   { background: #E6F1FB; color: #0C447C; }
+  .pill-outlier { background: #F3E8FF; color: #5B21B6; }
   @media (prefers-color-scheme: dark) {
-    .pill-fail { background: #2C2C2A; color: #B4B2A9; }
-    .pill-good { background: #173404; color: #C0DD97; }
-    .pill-great { background: #042C53; color: #B5D4F4; }
+    .pill-fail    { background: #2C2C2A; color: #B4B2A9; }
+    .pill-modest  { background: #2C1F00; color: #F0B429; }
+    .pill-good    { background: #173404; color: #C0DD97; }
+    .pill-great   { background: #042C53; color: #B5D4F4; }
+    .pill-outlier { background: #1E0A3C; color: #C084FC; }
   }
   .pill-label { font-size: 10px; font-weight: 400; opacity: 0.7; margin-bottom: 2px; }
+  .quality-labels { position: relative; height: 18px; margin-top: 5px; }
+  .quality-labels span { position: absolute; font-size: 10px; color: var(--color-text-tertiary); transform: translateX(-50%); white-space: nowrap; }
+
+  /* ── Compare ── */
   .compare-section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 0.75rem; }
   .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 0.75rem; }
-  .compare-card { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 14px 16px; }
+  .compare-card {
+    border-radius: var(--radius-lg); padding: 14px 16px;
+    border: 1.5px solid transparent;
+    background-image: linear-gradient(var(--color-bg), var(--color-bg)), var(--rainbow);
+    background-origin: border-box; background-clip: padding-box, border-box;
+  }
   .compare-card-title { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 8px; }
   .compare-metric { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 0.5px solid var(--color-border); }
   .compare-metric:last-child { border-bottom: none; }
   .compare-key { font-size: 12px; color: var(--color-text-secondary); }
   .compare-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+
+  /* ── Pineapple background ── */
+  #pineapple-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden;
+  }
+  #pineapple-bg span {
+    position: absolute; user-select: none; line-height: 1;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    0%   { transform: translateY(0)   rotate(var(--r0)); }
+    50%  { transform: translateY(-18px) rotate(var(--r1)); }
+    100% { transform: translateY(0)   rotate(var(--r0)); }
+  }
 </style>
 </head>
 <body>
+<div id="pineapple-bg" aria-hidden="true"></div>
 <div class="container">
   <h1>Abundance House — financial model</h1>
   <p class="subtitle">Adjust the knobs to model your residency program. Add up to 4 scenarios to compare side by side.</p>
@@ -96,23 +220,35 @@ let activeIdx = 0;
 let states = [];
 
 function defaultState() {
-  return { duration:2, equity:2, founders:15, residencies:4, outcome:100, prob:15, fanciness:25, personnel:100, discount:80, dilution:20 };
+  return { duration:2, equity:2, founders:15, residencies:4, outcome:100, quality:50, fanciness:25, personnel:100, discount:80, dilution:20 };
 }
 
-function calcDist(prob) {
-  const shift = (prob - 15) / 15;
-  let great_w = Math.max(0.1, Math.min(15, 1 + shift * 2));
-  let good_w  = Math.max(1,   Math.min(30, 9 + shift * 4));
-  let fail_w  = Math.max(0, 100 - great_w - good_w);
-  const tot = fail_w + good_w + great_w;
-  return { fail: fail_w/tot*100, good: good_w/tot*100, great: great_w/tot*100 };
+// Anchors: implied-worst at 0, Poor at 25, Average at 50, Strong at 75, Exceptional at 100
+const QUALITY_ANCHORS = [
+  [85, 10, 4, 1, 0],
+  [75, 14, 7, 3, 1],
+  [65, 18, 10, 5, 2],
+  [50, 25, 15, 8, 2],
+  [35, 30, 20, 12, 3],
+];
+const ANCHOR_T = [0, 25, 50, 75, 100];
+const TIER_RETURNS = [0, 2, 10, 35, 100];
+
+function qualityDist(q) {
+  let lo = ANCHOR_T.length - 2;
+  for (let k = 0; k < ANCHOR_T.length - 1; k++) {
+    if (q <= ANCHOR_T[k + 1]) { lo = k; break; }
+  }
+  const hi = lo + 1;
+  const frac = (q - ANCHOR_T[lo]) / (ANCHOR_T[hi] - ANCHOR_T[lo]);
+  return QUALITY_ANCHORS[lo].map((v, j) => v + (QUALITY_ANCHORS[hi][j] - v) * frac);
 }
 
 function calcMetrics(s) {
   const maxRes = s.duration===3 ? 4 : s.duration===2 ? 6 : 12;
   const res = Math.min(s.residencies, maxRes);
-  const dist = calcDist(s.prob);
-  const ev = (dist.fail/100)*1 + (dist.good/100)*10 + (dist.great/100)*100;
+  const dist = qualityDist(s.quality);
+  const ev = dist.reduce((sum, pct, j) => sum + (pct / 100) * TIER_RETURNS[j], 0);
   const valuePerFounder = s.outcome*1e6 * ev * (s.equity/100) * (1 - s.dilution/100) * (1 - s.discount/100);
   const equityPerBatch = s.founders * (s.equity/100);
   const batchValue = s.founders * valuePerFounder;
@@ -126,10 +262,12 @@ function calcMetrics(s) {
 
 function maxResForDur(dur) { return dur===3 ? 4 : dur===2 ? 6 : 12; }
 
-function distPills(dist) {
-  return `<div class="dist-pill pill-fail"><div class="pill-label">Flat/fail</div>${dist.fail.toFixed(0)}%</div>
-          <div class="dist-pill pill-good"><div class="pill-label">10× outcome</div>${dist.good.toFixed(0)}%</div>
-          <div class="dist-pill pill-great"><div class="pill-label">100× outcome</div>${dist.great.toFixed(0)}%</div>`;
+function qualityPills(dist) {
+  const labels  = ['Fail', 'Modest', 'Good', 'Great', 'Outlier'];
+  const classes = ['pill-fail', 'pill-modest', 'pill-good', 'pill-great', 'pill-outlier'];
+  return labels.map((label, j) =>
+    `<div class="dist-pill ${classes[j]}"><div class="pill-label">${label} (${TIER_RETURNS[j]}×)</div>${dist[j].toFixed(0)}%</div>`
+  ).join('');
 }
 
 function buildMetrics(m, scName) {
@@ -165,9 +303,22 @@ function buildScenario(s, m, i) {
     <p class="section-title">Expected outcome per founder</p>
     <div class="knobs">
       ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M')}
-      ${knobHTML('prob','Probability / success tilt',s.prob,1,50,1,v=>v+'%')}
     </div>
-    <div class="dist-row" id="dist-${i}">${distPills(m.dist)}</div>
+    <p class="section-title">Selection quality</p>
+    <div class="knob">
+      <div class="knob-header">
+        <span class="knob-label">Selection quality</span>
+        <span class="knob-value">${Math.round(s.quality)}</span>
+      </div>
+      <input type="range" min="1" max="100" step="1" value="${s.quality}" data-key="quality">
+      <div class="quality-labels">
+        <span style="left:24.2%">Poor</span>
+        <span style="left:49.5%">Average</span>
+        <span style="left:74.7%">Strong</span>
+        <span style="left:100%;transform:translateX(-100%)">Exceptional</span>
+      </div>
+    </div>
+    <div class="dist-row" id="dist-${i}">${qualityPills(m.dist)}</div>
     <p class="section-title">Costs</p>
     <div class="knobs">
       ${knobHTML('fanciness','Fanciness ($/month baseline)',s.fanciness,25,100,5,v=>'$'+v+'k/mo')}
@@ -184,7 +335,7 @@ function buildScenario(s, m, i) {
 
 const fmtFns = {
   duration:v=>v+' mo', equity:v=>v+'%', founders:v=>v+' founders',
-  residencies:v=>v+'/yr', outcome:v=>'$'+v+'M', prob:v=>v+'%',
+  residencies:v=>v+'/yr', outcome:v=>'$'+v+'M', quality:v=>Math.round(v),
   fanciness:v=>'$'+v+'k/mo', personnel:v=>'$'+v+'k/yr',
   discount:v=>v+'%', dilution:v=>v+'%'
 };
@@ -257,7 +408,7 @@ function updateScenario(i) {
     if (span && fmtFns[key]) span.textContent = fmtFns[key](s[key]);
   });
   const distEl = sc.querySelector('[id^="dist-"]');
-  if (distEl) distEl.innerHTML = distPills(m.dist);
+  if (distEl) distEl.innerHTML = qualityPills(m.dist);
   const metricsEl = sc.querySelector('[id^="metrics-"]');
   if (metricsEl) metricsEl.innerHTML = buildMetrics(m);
 }
@@ -275,6 +426,23 @@ function updateCompare() {
     </div>`;
   }).join('');
 }
+
+// Pineapple background
+(function() {
+  const bg = document.getElementById('pineapple-bg');
+  for (let i = 0; i < 28; i++) {
+    const s = document.createElement('span');
+    const size = 28 + Math.random() * 64;
+    const opacity = 0.04 + Math.random() * 0.07;
+    const r0 = (Math.random() * 40 - 20).toFixed(1) + 'deg';
+    const r1 = (Math.random() * 40 - 20).toFixed(1) + 'deg';
+    const dur = (6 + Math.random() * 8).toFixed(1) + 's';
+    const delay = (Math.random() * -10).toFixed(1) + 's';
+    s.textContent = '🍍';
+    s.style.cssText = `font-size:${size}px;opacity:${opacity};left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;--r0:${r0};--r1:${r1};animation-duration:${dur};animation-delay:${delay};`;
+    bg.appendChild(s);
+  }
+})();
 
 renderAll();
 </script>
