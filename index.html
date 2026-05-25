@@ -333,8 +333,7 @@ function buildMetrics(m, scName) {
     <div class="metric"><div class="metric-label">Value per batch</div><div class="metric-value">${fmt(m.batchValue)}</div><div class="metric-sub">Gross equity per cohort</div></div>
     <div class="metric"><div class="metric-label">Cost per residency</div><div class="metric-value">${fmt(m.costPerResidency)}</div><div class="metric-sub">Incl. personnel allocation</div></div>
     <div class="metric"><div class="metric-label">Total annual cost</div><div class="metric-value">${fmt(m.totalCost)}</div><div class="metric-sub">All residencies + personnel</div></div>
-    <div class="metric"><div class="metric-label">Equity per batch</div><div class="metric-value">${m.equityPerBatch.toFixed(1)}%</div><div class="metric-sub">${m.res} batches/yr</div></div>
-    <div class="metric"><div class="metric-label">EV multiple</div><div class="metric-value">${m.ev.toFixed(2)}×</div><div class="metric-sub">Probability-weighted return</div></div>`;
+    `;
 }
 
 function knobHTML(key, label, val, min, max, step, fmtFn, help) {
@@ -359,24 +358,6 @@ function buildScenario(s, m, i) {
       ${knobHTML('founders','Founders per batch',s.founders,8,40,1,v=>v+' founders',"How many founders join each cohort. More founders means more equity but also higher costs and potentially lower intimacy.")}
       ${knobHTML('residencies','Residencies per year',Math.min(s.residencies,mr),1,mr,1,v=>v+'/yr',"How many batches you run annually. Automatically capped based on duration (a 3-month residency can run at most 4 times per year).")}
     </div>
-    <div class="knob" style="margin-top:12px">
-      <div class="knob-header">
-        <span class="knob-label">Program improvement rate <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
-        <span class="knob-value">${fmtImprovement(s.improvement)}</span>
-      </div>
-      <p class="knob-help">How fast your program gets better over time. This compounds annually and affects three things simultaneously: your selection quality improves (better founders apply as reputation grows), the equity you can charge increases (stronger brand = more leverage), and expected founder outcomes rise (better founders build bigger companies). Modest = 5%/yr, Steady = 10%/yr, Strong = 20%/yr, Aggressive = 35%/yr.</p>
-      <input type="range" min="1" max="4" step="0.01" value="${s.improvement}" data-key="improvement">
-      <div class="quality-labels">
-        <span style="left:0%;transform:none">Modest</span>
-        <span style="left:33.3%">Steady</span>
-        <span style="left:66.7%">Strong</span>
-        <span style="left:100%;transform:translateX(-100%)">Aggressive</span>
-      </div>
-    </div>
-    <p class="section-title">Expected outcome per founder</p>
-    <div class="knobs">
-      ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M',"The estimated value of a founder's company at exit if they succeed, in today's dollars. This is not the expected value of a random company — it's your assumption about what a successful Abundance House company looks like at year 7. Think of it as your target company profile.")}
-    </div>
     <p class="section-title">Selection quality</p>
     <div class="knob">
       <div class="knob-header">
@@ -393,6 +374,23 @@ function buildScenario(s, m, i) {
       </div>
     </div>
     <div class="dist-row" id="dist-${i}">${qualityPills(m.dist)}</div>
+    <div class="knobs" style="margin-top:12px">
+      ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M',"The estimated value of a founder's company at exit if they succeed, in today's dollars. This is not the expected value of a random company — it's your assumption about what a successful Abundance House company looks like at year 7. Think of it as your target company profile.")}
+      <div class="knob">
+        <div class="knob-header">
+          <span class="knob-label">Program improvement rate <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
+          <span class="knob-value">${fmtImprovement(s.improvement)}</span>
+        </div>
+        <p class="knob-help">How fast your program gets better over time. This compounds annually and affects three things simultaneously: your selection quality improves (better founders apply as reputation grows), the equity you can charge increases (stronger brand = more leverage), and expected founder outcomes rise (better founders build bigger companies). Modest = 5%/yr, Steady = 10%/yr, Strong = 20%/yr, Aggressive = 35%/yr.</p>
+        <input type="range" min="1" max="4" step="0.01" value="${s.improvement}" data-key="improvement">
+        <div class="quality-labels">
+          <span style="left:0%;transform:none">Modest</span>
+          <span style="left:33.3%">Steady</span>
+          <span style="left:66.7%">Strong</span>
+          <span style="left:100%;transform:translateX(-100%)">Aggressive</span>
+        </div>
+      </div>
+    </div>
     <p class="section-title">Costs</p>
     <div class="knobs">
       ${knobHTML('fanciness','Fanciness ($/month baseline)',s.fanciness,25,100,5,v=>'$'+v+'k/mo',"The baseline monthly cost of running the physical residency experience, per month. At $25k/month (baseline) you're running a high-quality but modest house. At $100k/month you're running a truly exceptional experience. Costs also scale with number of founders — each additional founder above 12 adds $2k/month.")}
@@ -508,8 +506,6 @@ function updateCompare() {
       <div class="compare-metric"><span class="compare-key">Portfolio value</span><span class="compare-val">${fmt(m.totalValue)}</span></div>
       <div class="compare-metric"><span class="compare-key">Per-batch value</span><span class="compare-val">${fmt(m.batchValue)}</span></div>
       <div class="compare-metric"><span class="compare-key">Annual cost</span><span class="compare-val">${fmt(m.totalCost)}</span></div>
-      <div class="compare-metric"><span class="compare-key">Equity/batch</span><span class="compare-val">${m.equityPerBatch.toFixed(1)}%</span></div>
-      <div class="compare-metric"><span class="compare-key">EV multiple</span><span class="compare-val">${m.ev.toFixed(2)}×</span></div>
     </div>`;
   }).join('');
 }
