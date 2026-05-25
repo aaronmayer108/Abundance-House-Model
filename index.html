@@ -229,11 +229,11 @@ function defaultState() {
 
 // Anchors: implied-worst at 0, Poor at 25, Average at 50, Strong at 75, Exceptional at 100
 const QUALITY_ANCHORS = [
-  [85, 10, 4, 1, 0],
-  [75, 14, 7, 3, 1],
-  [65, 18, 10, 5, 2],
-  [50, 25, 15, 8, 2],
-  [35, 30, 20, 12, 3],
+  [84.5, 10,   4,  1,  0.5], // implied worst (extrapolated)
+  [75.5, 14,   7,  3,  0.5], // Poor
+  [66.5, 18,  10,  5,  0.5], // Average
+  [50.5, 25,  15,  8,  1.5], // Strong
+  [37,   28,  20, 12,  3  ], // Exceptional
 ];
 const ANCHOR_T = [0, 25, 50, 75, 100];
 const TIER_RETURNS = [0, 2, 10, 35, 100];
