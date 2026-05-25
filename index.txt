@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abundance House — Financial Model</title>
+<link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --color-bg: #ffffff;
+    --color-bg-secondary: #f5f5f3;
+    --color-bg-tertiary: #efefed;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #5f5e5a;
+    --color-text-tertiary: #888780;
+    --color-border: rgba(0,0,0,0.12);
+    --color-border-secondary: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #1c1c1a;
+      --color-bg-secondary: #252523;
+      --color-bg-tertiary: #2e2e2b;
+      --color-text-primary: #eeecea;
+      --color-text-secondary: #a8a7a0;
+      --color-text-tertiary: #6e6d69;
+      --color-border: rgba(255,255,255,0.1);
+      --color-border-secondary: rgba(255,255,255,0.18);
+    }
+  }
+  body { font-family: var(--font); background: var(--color-bg); color: var(--color-text-primary); padding: 2rem 1rem; min-height: 100vh; }
+  .container { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 1.5rem; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tab-btn { padding: 6px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-secondary); cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font); }
+  .tab-btn.active { background: var(--color-bg-secondary); color: var(--color-text-primary); border-color: var(--color-border-secondary); }
+  .tab-btn.add-btn { border-style: dashed; }
+  .tab-btn:hover { background: var(--color-bg-secondary); }
+  .scenario { display: none; }
+  .scenario.active { display: block; }
+  .section-title { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 1.5rem 0 0.75rem; }
+  .knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .knob { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
+  .knob-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .knob-label { font-size: 13px; color: var(--color-text-secondary); }
+  .knob-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); min-width: 80px; text-align: right; }
+  input[type=range] { width: 100%; accent-color: #534AB7; cursor: pointer; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 0.75rem; }
+  .metric { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 14px 16px; }
+  .metric-label { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; }
+  .metric-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+  .divider { border: none; border-top: 0.5px solid var(--color-border); margin: 1.5rem 0; }
+  .dist-row { display: flex; gap: 8px; margin-top: 0.5rem; }
+  .dist-pill { flex: 1; border-radius: var(--radius-md); padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 500; }
+  .pill-fail { background: #F1EFE8; color: #444441; }
+  .pill-good { background: #EAF3DE; color: #3B6D11; }
+  .pill-great { background: #E6F1FB; color: #0C447C; }
+  @media (prefers-color-scheme: dark) {
+    .pill-fail { background: #2C2C2A; color: #B4B2A9; }
+    .pill-good { background: #173404; color: #C0DD97; }
+    .pill-great { background: #042C53; color: #B5D4F4; }
+  }
+  .pill-label { font-size: 10px; font-weight: 400; opacity: 0.7; margin-bottom: 2px; }
+  .compare-section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 0.75rem; }
+  .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 0.75rem; }
+  .compare-card { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 14px 16px; }
+  .compare-card-title { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 8px; }
+  .compare-metric { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 0.5px solid var(--color-border); }
+  .compare-metric:last-child { border-bottom: none; }
+  .compare-key { font-size: 12px; color: var(--color-text-secondary); }
+  .compare-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Abundance House — financial model</h1>
+  <p class="subtitle">Adjust the knobs to model your residency program. Add up to 4 scenarios to compare side by side.</p>
+  <div class="tabs" id="tabs"></div>
+  <div id="scenarios"></div>
+  <hr class="divider">
+  <p class="compare-section-title">Scenario comparison</p>
+  <div class="compare-grid" id="compare"></div>
+</div>
+
+<script>
+const fmt = n => n >= 1e9 ? `$${(n/1e9).toFixed(2)}B` : n >= 1e6 ? `$${(n/1e6).toFixed(1)}M` : n >= 1e3 ? `$${(n/1e3).toFixed(0)}K` : `$${Math.round(n)}`;
+
+let scenarios = [{name:'Scenario A'},{name:'Scenario B'}];
+let activeIdx = 0;
+let states = [];
+
+function defaultState() {
+  return { duration:2, equity:2, founders:15, residencies:4, outcome:100, prob:15, fanciness:25, personnel:100, discount:80, dilution:20 };
+}
+
+function calcDist(prob) {
+  const shift = (prob - 15) / 15;
+  let great_w = Math.max(0.1, Math.min(15, 1 + shift * 2));
+  let good_w  = Math.max(1,   Math.min(30, 9 + shift * 4));
+  let fail_w  = Math.max(0, 100 - great_w - good_w);
+  const tot = fail_w + good_w + great_w;
+  return { fail: fail_w/tot*100, good: good_w/tot*100, great: great_w/tot*100 };
+}
+
+function calcMetrics(s) {
+  const maxRes = s.duration===3 ? 4 : s.duration===2 ? 6 : 12;
+  const res = Math.min(s.residencies, maxRes);
+  const dist = calcDist(s.prob);
+  const ev = (dist.fail/100)*1 + (dist.good/100)*10 + (dist.great/100)*100;
+  const valuePerFounder = s.outcome*1e6 * ev * (s.equity/100) * (1 - s.dilution/100) * (1 - s.discount/100);
+  const equityPerBatch = s.founders * (s.equity/100);
+  const batchValue = s.founders * valuePerFounder;
+  const totalValue = res * batchValue;
+  const baseCost = 25000 + (s.founders - 12) * 2000;
+  const costPerMonth = Math.max(5000, baseCost) * (s.fanciness / 25);
+  const costPerResidency = costPerMonth * s.duration + (s.personnel * 1000 / res);
+  const totalCost = costPerResidency * res;
+  return { res, dist, ev, equityPerBatch, batchValue, totalValue, costPerResidency, totalCost };
+}
+
+function maxResForDur(dur) { return dur===3 ? 4 : dur===2 ? 6 : 12; }
+
+function distPills(dist) {
+  return `<div class="dist-pill pill-fail"><div class="pill-label">Flat/fail</div>${dist.fail.toFixed(0)}%</div>
+          <div class="dist-pill pill-good"><div class="pill-label">10× outcome</div>${dist.good.toFixed(0)}%</div>
+          <div class="dist-pill pill-great"><div class="pill-label">100× outcome</div>${dist.great.toFixed(0)}%</div>`;
+}
+
+function buildMetrics(m, scName) {
+  return `
+    <div class="metric"><div class="metric-label">Total portfolio value</div><div class="metric-value">${fmt(m.totalValue)}</div><div class="metric-sub">${m.res} residencies · post-dilution, NPV-adjusted</div></div>
+    <div class="metric"><div class="metric-label">Value per batch</div><div class="metric-value">${fmt(m.batchValue)}</div><div class="metric-sub">Gross equity per cohort</div></div>
+    <div class="metric"><div class="metric-label">Cost per residency</div><div class="metric-value">${fmt(m.costPerResidency)}</div><div class="metric-sub">Incl. personnel allocation</div></div>
+    <div class="metric"><div class="metric-label">Total annual cost</div><div class="metric-value">${fmt(m.totalCost)}</div><div class="metric-sub">All residencies + personnel</div></div>
+    <div class="metric"><div class="metric-label">Equity per batch</div><div class="metric-value">${m.equityPerBatch.toFixed(1)}%</div><div class="metric-sub">${m.res} batches/yr</div></div>
+    <div class="metric"><div class="metric-label">EV multiple</div><div class="metric-value">${m.ev.toFixed(2)}×</div><div class="metric-sub">Probability-weighted return</div></div>`;
+}
+
+function knobHTML(key, label, val, min, max, step, fmtFn) {
+  return `<div class="knob">
+    <div class="knob-header">
+      <span class="knob-label">${label}</span>
+      <span class="knob-value" id="kv-${key}">${fmtFn(val)}</span>
+    </div>
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-key="${key}" data-fmt-id="${key}">
+  </div>`;
+}
+
+function buildScenario(s, m, i) {
+  const mr = maxResForDur(s.duration);
+  return `
+    <p class="section-title">Structure</p>
+    <div class="knobs">
+      ${knobHTML('duration','Duration (months)',s.duration,1,3,1,v=>v+' mo')}
+      ${knobHTML('equity','Equity charge',s.equity,0.1,5,0.1,v=>v+'%')}
+      ${knobHTML('founders','Founders per batch',s.founders,8,40,1,v=>v+' founders')}
+      ${knobHTML('residencies','Residencies per year',Math.min(s.residencies,mr),1,mr,1,v=>v+'/yr')}
+    </div>
+    <p class="section-title">Expected outcome per founder</p>
+    <div class="knobs">
+      ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M')}
+      ${knobHTML('prob','Probability / success tilt',s.prob,1,50,1,v=>v+'%')}
+    </div>
+    <div class="dist-row" id="dist-${i}">${distPills(m.dist)}</div>
+    <p class="section-title">Costs</p>
+    <div class="knobs">
+      ${knobHTML('fanciness','Fanciness ($/month baseline)',s.fanciness,25,100,5,v=>'$'+v+'k/mo')}
+      ${knobHTML('personnel','Personnel cost',s.personnel,0,500,25,v=>'$'+v+'k/yr')}
+    </div>
+    <p class="section-title">Value adjustments</p>
+    <div class="knobs">
+      ${knobHTML('discount','Discount rate (NPV haircut)',s.discount,0,100,1,v=>v+'%')}
+      ${knobHTML('dilution','Dilution assumption',s.dilution,0,100,1,v=>v+'%')}
+    </div>
+    <p class="section-title">Outputs</p>
+    <div class="metrics" id="metrics-${i}">${buildMetrics(m)}</div>`;
+}
+
+const fmtFns = {
+  duration:v=>v+' mo', equity:v=>v+'%', founders:v=>v+' founders',
+  residencies:v=>v+'/yr', outcome:v=>'$'+v+'M', prob:v=>v+'%',
+  fanciness:v=>'$'+v+'k/mo', personnel:v=>'$'+v+'k/yr',
+  discount:v=>v+'%', dilution:v=>v+'%'
+};
+
+function renderAll() {
+  const tabsEl = document.getElementById('tabs');
+  const scenEl = document.getElementById('scenarios');
+  tabsEl.innerHTML = '';
+  scenEl.innerHTML = '';
+
+  scenarios.forEach((sc, i) => {
+    if (!states[i]) states[i] = defaultState();
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === activeIdx ? ' active' : '');
+    btn.textContent = sc.name;
+    btn.onclick = () => { activeIdx = i; renderAll(); };
+    tabsEl.appendChild(btn);
+  });
+
+  if (scenarios.length < 4) {
+    const add = document.createElement('button');
+    add.className = 'tab-btn add-btn';
+    add.innerHTML = '+ Add scenario';
+    add.onclick = () => {
+      const letters = ['A','B','C','D'];
+      scenarios.push({ name: 'Scenario ' + letters[scenarios.length] });
+      states.push(defaultState());
+      activeIdx = scenarios.length - 1;
+      renderAll();
+    };
+    tabsEl.appendChild(add);
+  }
+
+  scenarios.forEach((sc, i) => {
+    const s = states[i];
+    const m = calcMetrics(s);
+    const div = document.createElement('div');
+    div.className = 'scenario' + (i === activeIdx ? ' active' : '');
+    div.innerHTML = buildScenario(s, m, i);
+    scenEl.appendChild(div);
+
+    div.querySelectorAll('input[type=range]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const key = inp.dataset.key;
+        states[i][key] = parseFloat(inp.value);
+        if (key === 'duration') {
+          const mr = maxResForDur(states[i].duration);
+          if (states[i].residencies > mr) states[i].residencies = mr;
+        }
+        updateScenario(i);
+        updateCompare();
+      });
+    });
+  });
+
+  updateCompare();
+}
+
+function updateScenario(i) {
+  const s = states[i];
+  const m = calcMetrics(s);
+  const sc = document.querySelectorAll('.scenario')[i];
+  if (!sc) return;
+  sc.querySelectorAll('input[type=range]').forEach(inp => {
+    const key = inp.dataset.key;
+    const mr = maxResForDur(s.duration);
+    if (key === 'residencies') inp.max = mr;
+    inp.value = s[key];
+    const span = inp.previousElementSibling?.querySelector('.knob-value');
+    if (span && fmtFns[key]) span.textContent = fmtFns[key](s[key]);
+  });
+  const distEl = sc.querySelector('[id^="dist-"]');
+  if (distEl) distEl.innerHTML = distPills(m.dist);
+  const metricsEl = sc.querySelector('[id^="metrics-"]');
+  if (metricsEl) metricsEl.innerHTML = buildMetrics(m);
+}
+
+function updateCompare() {
+  document.getElementById('compare').innerHTML = scenarios.map((sc, i) => {
+    const m = calcMetrics(states[i] || defaultState());
+    return `<div class="compare-card">
+      <div class="compare-card-title">${sc.name}</div>
+      <div class="compare-metric"><span class="compare-key">Portfolio value</span><span class="compare-val">${fmt(m.totalValue)}</span></div>
+      <div class="compare-metric"><span class="compare-key">Per-batch value</span><span class="compare-val">${fmt(m.batchValue)}</span></div>
+      <div class="compare-metric"><span class="compare-key">Annual cost</span><span class="compare-val">${fmt(m.totalCost)}</span></div>
+      <div class="compare-metric"><span class="compare-key">Equity/batch</span><span class="compare-val">${m.equityPerBatch.toFixed(1)}%</span></div>
+      <div class="compare-metric"><span class="compare-key">EV multiple</span><span class="compare-val">${m.ev.toFixed(2)}×</span></div>
+    </div>`;
+  }).join('');
+}
+
+renderAll();
+</script>
+</body>
+</html>
