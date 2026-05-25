@@ -99,6 +99,10 @@
     font-size: 14px; font-weight: 600; min-width: 80px; text-align: right;
     color: var(--color-text-primary);
   }
+  .info-btn { background: none; border: none; padding: 0 2px; cursor: pointer; font-size: 12px; color: var(--color-text-tertiary); opacity: 0.55; line-height: 1; vertical-align: middle; font-family: var(--font); transition: opacity 0.15s; }
+  .info-btn:hover { opacity: 1; }
+  .knob-help { display: none; font-size: 12px; color: var(--color-text-tertiary); line-height: 1.55; margin-bottom: 10px; }
+  .knob-help.visible { display: block; }
 
   /* ══ SLIDERS ══ */
   input[type=range] {
@@ -333,12 +337,14 @@ function buildMetrics(m, scName) {
     <div class="metric"><div class="metric-label">EV multiple</div><div class="metric-value">${m.ev.toFixed(2)}×</div><div class="metric-sub">Probability-weighted return</div></div>`;
 }
 
-function knobHTML(key, label, val, min, max, step, fmtFn) {
+function knobHTML(key, label, val, min, max, step, fmtFn, help) {
+  const infoBtn  = help ? ` <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button>` : '';
+  const helpHtml = help ? `\n    <p class="knob-help">${help}</p>` : '';
   return `<div class="knob">
     <div class="knob-header">
-      <span class="knob-label">${label}</span>
+      <span class="knob-label">${label}${infoBtn}</span>
       <span class="knob-value" id="kv-${key}">${fmtFn(val)}</span>
-    </div>
+    </div>${helpHtml}
     <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-key="${key}" data-fmt-id="${key}">
   </div>`;
 }
@@ -348,16 +354,17 @@ function buildScenario(s, m, i) {
   return `
     <p class="section-title">Structure</p>
     <div class="knobs">
-      ${knobHTML('duration','Duration (months)',s.duration,1,3,1,v=>v+' mo')}
-      ${knobHTML('equity','Equity charge',s.equity,0.1,5,0.1,v=>v+'%')}
-      ${knobHTML('founders','Founders per batch',s.founders,8,40,1,v=>v+' founders')}
-      ${knobHTML('residencies','Residencies per year',Math.min(s.residencies,mr),1,mr,1,v=>v+'/yr')}
+      ${knobHTML('duration','Duration (months)',s.duration,1,3,1,v=>v+' mo',"How many months each residency runs. Longer residencies build deeper founder relationships but limit how many batches you can run per year.")}
+      ${knobHTML('equity','Equity charge',s.equity,0.1,5,0.1,v=>v+'%',"The percentage of each founder's company you take in exchange for the residency. This is your starting point in year 1 — it grows as your program's reputation improves.")}
+      ${knobHTML('founders','Founders per batch',s.founders,8,40,1,v=>v+' founders',"How many founders join each cohort. More founders means more equity but also higher costs and potentially lower intimacy.")}
+      ${knobHTML('residencies','Residencies per year',Math.min(s.residencies,mr),1,mr,1,v=>v+'/yr',"How many batches you run annually. Automatically capped based on duration (a 3-month residency can run at most 4 times per year).")}
     </div>
     <div class="knob" style="margin-top:12px">
       <div class="knob-header">
-        <span class="knob-label">Program improvement rate</span>
+        <span class="knob-label">Program improvement rate <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
         <span class="knob-value">${fmtImprovement(s.improvement)}</span>
       </div>
+      <p class="knob-help">How fast your program gets better over time. This compounds annually and affects three things simultaneously: your selection quality improves (better founders apply as reputation grows), the equity you can charge increases (stronger brand = more leverage), and expected founder outcomes rise (better founders build bigger companies). Modest = 5%/yr, Steady = 10%/yr, Strong = 20%/yr, Aggressive = 35%/yr.</p>
       <input type="range" min="1" max="4" step="0.01" value="${s.improvement}" data-key="improvement">
       <div class="quality-labels">
         <span style="left:0%;transform:none">Modest</span>
@@ -368,14 +375,15 @@ function buildScenario(s, m, i) {
     </div>
     <p class="section-title">Expected outcome per founder</p>
     <div class="knobs">
-      ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M')}
+      ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M',"The estimated value of a founder's company at exit if they succeed, in today's dollars. This is not the expected value of a random company — it's your assumption about what a successful Abundance House company looks like at year 7. Think of it as your target company profile.")}
     </div>
     <p class="section-title">Selection quality</p>
     <div class="knob">
       <div class="knob-header">
-        <span class="knob-label">Selection quality</span>
+        <span class="knob-label">Selection quality <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
         <span class="knob-value">${Math.round(s.quality)}</span>
       </div>
+      <p class="knob-help">How good you are at identifying and attracting high-potential founders. This shifts the entire outcome distribution: better selection compresses the fail bucket and inflates the good and great buckets. Based on a realistic 5-tier startup outcome model (Fail at 0×, Modest at 2×, Good at 10×, Great at 35×, Outlier at 100×). Improves over time based on your improvement rate.</p>
       <input type="range" min="1" max="100" step="1" value="${s.quality}" data-key="quality">
       <div class="quality-labels">
         <span style="left:24.2%">Poor</span>
@@ -387,13 +395,13 @@ function buildScenario(s, m, i) {
     <div class="dist-row" id="dist-${i}">${qualityPills(m.dist)}</div>
     <p class="section-title">Costs</p>
     <div class="knobs">
-      ${knobHTML('fanciness','Fanciness ($/month baseline)',s.fanciness,25,100,5,v=>'$'+v+'k/mo')}
-      ${knobHTML('personnel','Personnel cost',s.personnel,0,500,25,v=>'$'+v+'k/yr')}
+      ${knobHTML('fanciness','Fanciness ($/month baseline)',s.fanciness,25,100,5,v=>'$'+v+'k/mo',"The baseline monthly cost of running the physical residency experience, per month. At $25k/month (baseline) you're running a high-quality but modest house. At $100k/month you're running a truly exceptional experience. Costs also scale with number of founders — each additional founder above 12 adds $2k/month.")}
+      ${knobHTML('personnel','Personnel cost',s.personnel,0,500,25,v=>'$'+v+'k/yr',"Your annual spend on staff, operations, legal, and admin. This is spread across all residencies in the year. Does not include your own time, which is effectively an opportunity cost not modeled here.")}
     </div>
     <p class="section-title">Value adjustments</p>
     <div class="knobs">
-      ${knobHTML('discount','Discount rate (NPV haircut)',s.discount,0,100,1,v=>v+'%')}
-      ${knobHTML('dilution','Dilution assumption',s.dilution,0,100,1,v=>v+'%')}
+      ${knobHTML('discount','Discount rate (NPV haircut)',s.discount,0,100,1,v=>v+'%',"A haircut on the total portfolio value to reflect the time value of money — equity you receive today won't be liquid for 5-10 years, and a dollar in the future is worth less than a dollar now. This should reflect pure time value only, since failure risk is already captured in the outcome distribution. A rate of 50% over 7 years implies roughly a 10% annual discount rate, which is standard for long-horizon illiquid assets.")}
+      ${knobHTML('dilution','Dilution assumption',s.dilution,0,100,1,v=>v+'%',"How much your equity stake shrinks as portfolio companies raise future funding rounds. Every time a company raises money, new shares are issued and your percentage ownership decreases. The cruel math of venture: your winners (the ones that raise the most rounds) dilute you the most. A realistic blended default for companies that reach meaningful exits is 60-65%, meaning you retain roughly 35-40% of your original stake at exit.")}
     </div>
     <p class="section-title">Outputs</p>
     <div class="metrics" id="metrics-${i}">${buildMetrics(m)}</div>
@@ -482,7 +490,7 @@ function updateScenario(i) {
     const mr = maxResForDur(s.duration);
     if (key === 'residencies') inp.max = mr;
     inp.value = s[key];
-    const span = inp.previousElementSibling?.querySelector('.knob-value');
+    const span = inp.closest('.knob')?.querySelector('.knob-value');
     if (span && fmtFns[key]) span.textContent = fmtFns[key](s[key]);
   });
   const distEl = sc.querySelector('[id^="dist-"]');
