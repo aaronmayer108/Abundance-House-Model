@@ -306,9 +306,10 @@ function qualityPills(dist) {
   ).join('');
 }
 
-function buildMetrics(m, scName) {
+function buildMetrics(m, tenYearValue) {
   return `
-    <div class="metric"><div class="metric-label">Total portfolio value</div><div class="metric-value">${fmt(m.totalValue)}</div><div class="metric-sub">${m.res} residencies · post-dilution, NPV-adjusted</div></div>
+    <div class="metric"><div class="metric-label">Yearly portfolio value</div><div class="metric-value">${fmt(m.totalValue)}</div><div class="metric-sub">${m.res} residencies · year 1 baseline</div></div>
+    <div class="metric"><div class="metric-label">10-year portfolio value</div><div class="metric-value">${fmt(tenYearValue)}</div><div class="metric-sub">Cumulative · incl. improvement rate</div></div>
     <div class="metric"><div class="metric-label">Value per batch</div><div class="metric-value">${fmt(m.batchValue)}</div><div class="metric-sub">Gross equity per cohort</div></div>
     <div class="metric"><div class="metric-label">Cost per residency</div><div class="metric-value">${fmt(m.costPerResidency)}</div><div class="metric-sub">Incl. personnel allocation</div></div>
     <div class="metric"><div class="metric-label">Total annual cost</div><div class="metric-value">${fmt(m.totalCost)}</div><div class="metric-sub">All residencies + personnel</div></div>
@@ -381,7 +382,7 @@ function buildScenario(s, m, i) {
       ${knobHTML('dilution','Dilution assumption',s.dilution,0,100,1,v=>v+'%',"How much your equity stake shrinks as portfolio companies raise future funding rounds. Every time a company raises money, new shares are issued and your percentage ownership decreases. The cruel math of venture: your winners (the ones that raise the most rounds) dilute you the most. A realistic blended default for companies that reach meaningful exits is 60-65%, meaning you retain roughly 35-40% of your original stake at exit.")}
     </div>
     <p class="section-title">Outputs</p>
-    <div class="metrics" id="metrics-${i}">${buildMetrics(m)}</div>
+    <div class="metrics" id="metrics-${i}">${buildMetrics(m, calcTimeline(s).at(-1))}</div>
     <p class="section-title">10-year outlook</p>
     <div class="chart-wrap"><canvas id="chart-${i}"></canvas></div>
     `;
@@ -467,7 +468,7 @@ function updateScenario(i) {
   const distEl = sc.querySelector('[id^="dist-"]');
   if (distEl) distEl.innerHTML = qualityPills(m.dist);
   const metricsEl = sc.querySelector('[id^="metrics-"]');
-  if (metricsEl) metricsEl.innerHTML = buildMetrics(m);
+  if (metricsEl) metricsEl.innerHTML = buildMetrics(m, calcTimeline(s).at(-1));
   updateChart(i);
 }
 
