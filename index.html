@@ -175,6 +175,28 @@
   .quality-labels { position: relative; height: 18px; margin-top: 5px; }
   .quality-labels span { position: absolute; font-size: 10px; color: var(--color-text-tertiary); transform: translateX(-50%); white-space: nowrap; }
 
+  /* ── Pro-rata toggle ── */
+  .toggle-row { display: flex; align-items: center; gap: 10px; }
+  .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider {
+    position: absolute; inset: 0; border-radius: 22px;
+    background: var(--color-border-secondary);
+    cursor: pointer; transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    left: 3px; top: 3px;
+    background: white;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #534AB7; }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+  .prorata-sub { margin-top: 12px; display: none; }
+  .prorata-sub.visible { display: block; }
+
   /* ── Compare ── */
   .compare-section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 0.75rem; }
   .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 0.75rem; }
@@ -229,7 +251,7 @@ let states = [];
 let charts = {};
 
 function defaultState() {
-  return { duration:1, equity:1, founders:12, residencies:3, outcome:100, quality:50, improvement:2, fanciness:25, personnel:100, discount:50, dilution:65 };
+  return { duration:1, equity:1, founders:12, residencies:3, outcome:100, quality:50, improvement:2, fanciness:25, personnel:100, discount:50, dilution:65, proRata:false, proRataThreshold:0, proRataCheck:150 };
 }
 
 // Anchors: implied-worst at 0, Poor at 25, Average at 50, Strong at 75, Exceptional at 100
@@ -285,7 +307,22 @@ function calcMetrics(s) {
   const res = Math.min(s.residencies, maxRes);
   const dist = qualityDist(s.quality);
   const ev = dist.reduce((sum, pct, j) => sum + (pct / 100) * TIER_RETURNS[j], 0);
-  const valuePerFounder = s.outcome*1e6 * ev * (s.equity/100) * (1 - s.dilution/100) * (1 - s.discount/100);
+
+  let valuePerFounder, proRataCapital = null, proRataPortfolioValue = null;
+
+  if (s.proRata) {
+    const qualifyingMin = parseFloat(s.proRataThreshold || 0) >= 0.5 ? 2 : 3;
+    const effDilution = Math.max(0, s.dilution - 20);
+    valuePerFounder = dist.reduce((sum, pct, j) => {
+      const dil = j >= qualifyingMin ? effDilution : s.dilution;
+      return sum + (pct / 100) * TIER_RETURNS[j] * s.outcome * 1e6 * (s.equity / 100) * (1 - dil / 100) * (1 - s.discount / 100);
+    }, 0);
+    const qualifyingPct = dist.slice(qualifyingMin).reduce((a, p) => a + p, 0) / 100;
+    proRataCapital = qualifyingPct * s.founders * res * (s.proRataCheck || 150) * 1000;
+  } else {
+    valuePerFounder = s.outcome*1e6 * ev * (s.equity/100) * (1 - s.dilution/100) * (1 - s.discount/100);
+  }
+
   const equityPerBatch = s.founders * (s.equity/100);
   const batchValue = s.founders * valuePerFounder;
   const totalValue = res * batchValue;
@@ -293,7 +330,10 @@ function calcMetrics(s) {
   const costPerMonth = Math.max(5000, baseCost) * (s.fanciness / 25);
   const costPerResidency = costPerMonth * s.duration + (s.personnel * 1000 / res);
   const totalCost = costPerResidency * res;
-  return { res, dist, ev, equityPerBatch, batchValue, totalValue, costPerResidency, totalCost };
+
+  if (s.proRata) proRataPortfolioValue = totalValue - proRataCapital;
+
+  return { res, dist, ev, equityPerBatch, batchValue, totalValue, costPerResidency, totalCost, proRataCapital, proRataPortfolioValue };
 }
 
 function maxResForDur(dur) { return dur===3 ? 4 : dur===2 ? 6 : 12; }
@@ -307,13 +347,17 @@ function qualityPills(dist) {
 }
 
 function buildMetrics(m, tenYearValue) {
+  const proRataCards = m.proRataCapital != null ? `
+    <div class="metric"><div class="metric-label">Pro-rata capital required</div><div class="metric-value">${fmt(m.proRataCapital)}</div><div class="metric-sub">Total follow-on deployment</div></div>
+    <div class="metric"><div class="metric-label">Pro-rata adjusted value</div><div class="metric-value">${fmt(m.proRataPortfolioValue)}</div><div class="metric-sub">Portfolio value net of follow-on cost</div></div>
+  ` : '';
   return `
     <div class="metric"><div class="metric-label">Yearly portfolio value</div><div class="metric-value">${fmt(m.totalValue)}</div><div class="metric-sub">${m.res} residencies · year 1 baseline</div></div>
     <div class="metric"><div class="metric-label">10-year portfolio value</div><div class="metric-value">${fmt(tenYearValue)}</div><div class="metric-sub">Cumulative · incl. improvement rate</div></div>
     <div class="metric"><div class="metric-label">Value per batch</div><div class="metric-value">${fmt(m.batchValue)}</div><div class="metric-sub">Gross equity per cohort</div></div>
     <div class="metric"><div class="metric-label">Cost per residency</div><div class="metric-value">${fmt(m.costPerResidency)}</div><div class="metric-sub">Incl. personnel allocation</div></div>
     <div class="metric"><div class="metric-label">Total annual cost</div><div class="metric-value">${fmt(m.totalCost)}</div><div class="metric-sub">All residencies + personnel</div></div>
-    `;
+    ${proRataCards}`;
 }
 
 function knobHTML(key, label, val, min, max, step, fmtFn, help) {
@@ -381,6 +425,22 @@ function buildScenario(s, m, i) {
       ${knobHTML('discount','Discount rate (NPV haircut)',s.discount,0,100,1,v=>v+'%',"A haircut on the total portfolio value to reflect the time value of money — equity you receive today won't be liquid for 5-10 years, and a dollar in the future is worth less than a dollar now. This should reflect pure time value only, since failure risk is already captured in the outcome distribution. A rate of 50% over 7 years implies roughly a 10% annual discount rate, which is standard for long-horizon illiquid assets.")}
       ${knobHTML('dilution','Dilution assumption',s.dilution,0,100,1,v=>v+'%',"How much your equity stake shrinks as portfolio companies raise future funding rounds. Every time a company raises money, new shares are issued and your percentage ownership decreases. The cruel math of venture: your winners (the ones that raise the most rounds) dilute you the most. A realistic blended default for companies that reach meaningful exits is 60-65%, meaning you retain roughly 35-40% of your original stake at exit.")}
     </div>
+    <div class="knob" style="margin-top:12px">
+      <div class="knob-header">
+        <span class="knob-label">Exercise pro-rata rights <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
+        <label class="toggle-switch">
+          <input type="checkbox" data-key="proRata"${s.proRata ? ' checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <p class="knob-help">Pro-rata rights let you invest in future funding rounds to maintain your ownership percentage in your best companies. Exercising them costs real capital but reduces dilution on your winners — the companies that matter most. This toggle models the net effect on your portfolio value after accounting for the capital deployed.</p>
+      <div class="prorata-sub${s.proRata ? ' visible' : ''}">
+        <div class="knobs" style="margin-top:0">
+          ${knobHTML('proRataThreshold','Pro-rata threshold',s.proRataThreshold,0,1,1,v=>parseFloat(v)>=0.5?'Good and above':'Great + Outlier',"Which outcome tiers you exercise pro-rata rights in. 'Great + Outlier only' targets your top performers; 'Good and above' casts a wider net but requires more capital.")}
+          ${knobHTML('proRataCheck','Avg follow-on check',s.proRataCheck,25,1000,25,v=>parseFloat(v)>=1000?'$1M':'$'+Math.round(v)+'k',"Your average follow-on investment per company you exercise pro-rata in, in today's dollars. This capital comes directly out of your own pocket.")}
+        </div>
+      </div>
+    </div>
     <p class="section-title">Outputs</p>
     <div class="metrics" id="metrics-${i}">${buildMetrics(m, calcTimeline(s).at(-1))}</div>
     <p class="section-title">10-year outlook</p>
@@ -392,7 +452,9 @@ const fmtFns = {
   duration:v=>v+' mo', equity:v=>v+'%', founders:v=>v+' founders',
   residencies:v=>v+'/yr', outcome:v=>'$'+v+'M', quality:v=>Math.round(v), improvement:fmtImprovement,
   fanciness:v=>'$'+v+'k/mo', personnel:v=>'$'+v+'k/yr',
-  discount:v=>v+'%', dilution:v=>v+'%'
+  discount:v=>v+'%', dilution:v=>v+'%',
+  proRataThreshold:v=>parseFloat(v)>=0.5?'Good and above':'Great + Outlier',
+  proRataCheck:v=>parseFloat(v)>=1000?'$1M':'$'+Math.round(v)+'k'
 };
 
 function renderAll() {
@@ -446,6 +508,16 @@ function renderAll() {
         updateCompare();
       });
     });
+    div.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const key = cb.dataset.key;
+        states[i][key] = cb.checked;
+        const sub = cb.closest('.knob')?.querySelector('.prorata-sub');
+        if (sub) sub.classList.toggle('visible', cb.checked);
+        updateScenario(i);
+        updateCompare();
+      });
+    });
     initChart(i, states[i]);
   });
 
@@ -464,6 +536,12 @@ function updateScenario(i) {
     inp.value = s[key];
     const span = inp.closest('.knob')?.querySelector('.knob-value');
     if (span && fmtFns[key]) span.textContent = fmtFns[key](s[key]);
+  });
+  sc.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const key = cb.dataset.key;
+    cb.checked = !!s[key];
+    const sub = cb.closest('.knob')?.querySelector('.prorata-sub');
+    if (sub) sub.classList.toggle('visible', !!s[key]);
   });
   const distEl = sc.querySelector('[id^="dist-"]');
   if (distEl) distEl.innerHTML = qualityPills(m.dist);
