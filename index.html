@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Abundance House — Financial Model</title>
 <link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -189,6 +190,9 @@
   .compare-key { font-size: 12px; color: var(--color-text-secondary); }
   .compare-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
 
+/* ── Timeline chart ── */
+  .chart-wrap { position: relative; height: 200px; margin-top: 1rem; }
+
 /* ── Pineapple background ── */
   #pineapple-bg {
     position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden;
@@ -222,6 +226,7 @@ const fmt = n => n >= 1e9 ? `$${(n/1e9).toFixed(2)}B` : n >= 1e6 ? `$${(n/1e6).t
 let scenarios = [{name:'Scenario A'},{name:'Scenario B'}];
 let activeIdx = 0;
 let states = [];
+let charts = {};
 
 function defaultState() {
   return { duration:1, equity:1, founders:12, residencies:3, outcome:100, quality:50, improvement:2, fanciness:25, personnel:100, discount:50, dilution:65 };
@@ -263,6 +268,18 @@ function fmtImprovement(v) {
 }
 
 // ─────────────────────────────────────────────────────────────
+function calcTimeline(s) {
+  const rate = improvementRate(s.improvement);
+  let cumulative = 0;
+  return Array.from({ length: 10 }, (_, t) => {
+    const quality = 100 - (100 - s.quality) * Math.pow(1 - rate, t);
+    const equity  = Math.min(5,    s.equity  * Math.pow(1 + rate / 2, t));
+    const outcome = Math.min(1000, s.outcome  * Math.pow(1 + rate, t));
+    cumulative += calcMetrics({ ...s, quality, equity, outcome }).totalValue;
+    return cumulative;
+  });
+}
+
 function calcMetrics(s) {
   const maxRes = s.duration===3 ? 4 : s.duration===2 ? 6 : 12;
   const res = Math.min(s.residencies, maxRes);
@@ -365,6 +382,8 @@ function buildScenario(s, m, i) {
     </div>
     <p class="section-title">Outputs</p>
     <div class="metrics" id="metrics-${i}">${buildMetrics(m)}</div>
+    <p class="section-title">10-year outlook</p>
+    <div class="chart-wrap"><canvas id="chart-${i}"></canvas></div>
     `;
 }
 
@@ -379,7 +398,9 @@ function renderAll() {
   const tabsEl = document.getElementById('tabs');
   const scenEl = document.getElementById('scenarios');
   tabsEl.innerHTML = '';
-scenEl.innerHTML = '';
+  Object.values(charts).forEach(c => c?.destroy());
+  charts = {};
+  scenEl.innerHTML = '';
 
   scenarios.forEach((sc, i) => {
     if (!states[i]) states[i] = defaultState();
@@ -424,6 +445,7 @@ scenEl.innerHTML = '';
         updateCompare();
       });
     });
+    initChart(i, states[i]);
   });
 
   updateCompare();
@@ -446,6 +468,7 @@ function updateScenario(i) {
   if (distEl) distEl.innerHTML = qualityPills(m.dist);
   const metricsEl = sc.querySelector('[id^="metrics-"]');
   if (metricsEl) metricsEl.innerHTML = buildMetrics(m);
+  updateChart(i);
 }
 
 function updateCompare() {
@@ -458,6 +481,65 @@ function updateCompare() {
       <div class="compare-metric"><span class="compare-key">Annual cost</span><span class="compare-val">${fmt(m.totalCost)}</span></div>
     </div>`;
   }).join('');
+}
+
+function initChart(idx, s) {
+  const ctx = document.getElementById(`chart-${idx}`);
+  if (!ctx) return;
+  if (charts[idx]) { charts[idx].destroy(); }
+  const dark      = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const textColor = dark ? '#a8a7a0' : '#888780';
+  const gridColor = dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  charts[idx] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10'],
+      datasets: [{
+        data: calcTimeline(s),
+        borderColor: '#534AB7',
+        backgroundColor: 'rgba(83,74,183,0.07)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#534AB7',
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          displayColors: false,
+          callbacks: {
+            title: items => `Year ${items[0].label.replace('Y', '')}`,
+            label: item  => fmt(item.parsed.y),
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: textColor, font: { size: 11 } },
+        },
+        y: {
+          border: { display: false },
+          grid: { color: gridColor },
+          ticks: { color: textColor, font: { size: 11 }, callback: v => fmt(v) },
+        },
+      },
+    },
+  });
+}
+
+function updateChart(idx) {
+  const c = charts[idx];
+  if (!c) return;
+  c.data.datasets[0].data = calcTimeline(states[idx]);
+  c.update('none');
 }
 
 // Pineapple background
