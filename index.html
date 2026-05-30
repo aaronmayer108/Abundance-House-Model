@@ -263,7 +263,7 @@ const QUALITY_ANCHORS = [
   [37,   28,  20, 12,  3  ], // Exceptional
 ];
 const ANCHOR_T = [0, 25, 50, 75, 100];
-const TIER_RETURNS = [0, 2, 10, 35, 100];
+const TIER_RETURNS = [0, 0.2, 1, 3, 10];
 
 function qualityDist(q) {
   let lo = ANCHOR_T.length - 2;
@@ -355,6 +355,7 @@ function buildMetrics(m, tenYearValue) {
     <div class="metric"><div class="metric-label">Yearly portfolio value</div><div class="metric-value">${fmt(m.totalValue)}</div><div class="metric-sub">${m.res} residencies · year 1 baseline</div></div>
     <div class="metric"><div class="metric-label">10-year portfolio value</div><div class="metric-value">${fmt(tenYearValue)}</div><div class="metric-sub">Cumulative · incl. improvement rate</div></div>
     <div class="metric"><div class="metric-label">Value per batch</div><div class="metric-value">${fmt(m.batchValue)}</div><div class="metric-sub">Gross equity per cohort</div></div>
+    <div class="metric"><div class="metric-label">Weighted exit fraction</div><div class="metric-value">${m.ev.toFixed(3)}</div><div class="metric-sub">Avg outcome as fraction of baseline exit</div></div>
     <div class="metric"><div class="metric-label">Cost per residency</div><div class="metric-value">${fmt(m.costPerResidency)}</div><div class="metric-sub">Incl. personnel allocation</div></div>
     <div class="metric"><div class="metric-label">Total annual cost</div><div class="metric-value">${fmt(m.totalCost)}</div><div class="metric-sub">All residencies + personnel</div></div>
     ${proRataCards}`;
@@ -388,7 +389,7 @@ function buildScenario(s, m, i) {
         <span class="knob-label">Selection quality <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
         <span class="knob-value">${Math.round(s.quality)}</span>
       </div>
-      <p class="knob-help">How good you are at identifying and attracting high-potential founders. This shifts the entire outcome distribution: better selection compresses the fail bucket and inflates the good and great buckets. Based on a realistic 5-tier startup outcome model (Fail at 0×, Modest at 2×, Good at 10×, Great at 35×, Outlier at 100×). Improves over time based on your improvement rate.</p>
+      <p class="knob-help">How good you are at identifying and attracting high-potential founders. This shifts the entire outcome distribution: better selection compresses the fail bucket and inflates the good and great buckets. Outcomes are expressed as fractions of the baseline exit value — Fail = 0×, Modest = 0.2×, Good = 1×, Great = 3×, Outlier = 10×. The 'Weighted exit fraction' metric shows the probability-weighted average across all tiers. Improves over time based on your improvement rate.</p>
       <input type="range" min="1" max="100" step="1" value="${s.quality}" data-key="quality">
       <div class="quality-labels">
         <span style="left:24.2%">Poor</span>
@@ -399,7 +400,7 @@ function buildScenario(s, m, i) {
     </div>
     <div class="dist-row" id="dist-${i}">${qualityPills(m.dist)}</div>
     <div class="knobs" style="margin-top:12px">
-      ${knobHTML('outcome','Expected exit value',s.outcome,10,1000,10,v=>'$'+v+'M',"The estimated value of a founder's company at exit if they succeed, in today's dollars. This is not the expected value of a random company — it's your assumption about what a successful Abundance House company looks like at year 7. Think of it as your target company profile.")}
+      ${knobHTML('outcome','Baseline exit value per company',s.outcome,10,1000,10,v=>'$'+v+'M',"The reference exit value used to anchor the outcome distribution. A 'Good' company (the middle tier) exits at exactly this value. Modest companies exit at 20% of it, Great at 3×, and Outliers at 10×. Set this to what a typical successful Abundance House company looks like at exit — not the average outcome, but the baseline for the Good tier.")}
       <div class="knob">
         <div class="knob-header">
           <span class="knob-label">Program improvement rate <button class="info-btn" onclick="this.closest('.knob').querySelector('.knob-help').classList.toggle('visible')" aria-label="Info">ⓘ</button></span>
